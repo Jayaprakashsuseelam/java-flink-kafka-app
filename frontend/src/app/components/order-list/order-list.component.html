@@ -1,0 +1,256 @@
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>
+        <i class="fas fa-list me-2"></i>
+        Orders Management
+      </h2>
+      <div>
+        <button class="btn btn-primary me-2" (click)="refreshOrders()" [disabled]="loading">
+          <i class="fas fa-sync-alt me-1"></i>
+          Refresh
+        </button>
+        <a routerLink="/orders/new" class="btn btn-success">
+          <i class="fas fa-plus me-1"></i>
+          New Order
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Spinner -->
+<div *ngIf="loading" class="loading-spinner">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+
+<!-- Error Message -->
+<div *ngIf="error" class="alert alert-danger" role="alert">
+  <i class="fas fa-exclamation-triangle me-2"></i>
+  {{ error }}
+  <button type="button" class="btn-close float-end" (click)="error = ''"></button>
+</div>
+
+<!-- Search and Filters -->
+<div *ngIf="!loading" class="row mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-search me-2"></i>
+          Search & Filters
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <!-- Search Input -->
+          <div class="col-md-4 mb-3">
+            <label for="searchInput" class="form-label">Search</label>
+            <div class="input-group">
+              <span class="input-group-text">
+                <i class="fas fa-search"></i>
+              </span>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="searchInput"
+                placeholder="Search by name, email, address, or ID..."
+                [(ngModel)]="searchTerm"
+                (input)="onSearch()">
+            </div>
+          </div>
+
+          <!-- Status Filter -->
+          <div class="col-md-3 mb-3">
+            <label for="statusFilter" class="form-label">Status</label>
+            <select 
+              class="form-select" 
+              id="statusFilter"
+              [(ngModel)]="statusFilter"
+              (change)="onStatusFilterChange()">
+              <option value="">All Statuses</option>
+              <option *ngFor="let status of statusOptions" [value]="status">
+                {{ status }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Email Filter -->
+          <div class="col-md-3 mb-3">
+            <label for="emailFilter" class="form-label">Email</label>
+            <input 
+              type="email" 
+              class="form-control" 
+              id="emailFilter"
+              placeholder="Filter by email..."
+              [(ngModel)]="emailFilter"
+              (input)="onEmailFilterChange()">
+          </div>
+
+          <!-- Clear Filters -->
+          <div class="col-md-2 mb-3 d-flex align-items-end">
+            <button 
+              class="btn btn-outline-secondary w-100" 
+              (click)="clearFilters()">
+              <i class="fas fa-times me-1"></i>
+              Clear
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Orders Table -->
+<div *ngIf="!loading" class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-table me-2"></i>
+            Orders ({{ filteredOrders.length }} total)
+          </h5>
+          <div class="text-muted">
+            Showing {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, filteredOrders.length) }} of {{ filteredOrders.length }}
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Items</th>
+                <th>Total Amount</th>
+                <th>Order Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let order of paginatedOrders">
+                <td>
+                  <strong>#{{ order.id }}</strong>
+                </td>
+                <td>
+                  <div>
+                    <strong>{{ order.customerName }}</strong>
+                    <br>
+                    <small class="text-muted">{{ order.shippingAddress }}</small>
+                  </div>
+                </td>
+                <td>
+                  <a href="mailto:{{ order.customerEmail }}" class="text-decoration-none">
+                    {{ order.customerEmail }}
+                  </a>
+                </td>
+                <td>
+                  <span class="badge status-badge" [ngClass]="getStatusBadgeClass(order.status)">
+                    {{ order.status }}
+                  </span>
+                  <div class="mt-1">
+                    <select 
+                      class="form-select form-select-sm" 
+                      [value]="order.status"
+                      (change)="updateOrderStatus(order.id!, $event)">
+                      <option *ngFor="let status of statusOptions" [value]="status">
+                        {{ status }}
+                      </option>
+                    </select>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-info">{{ getItemCount(order) }} items</span>
+                </td>
+                <td>
+                  <strong class="text-success">${{ order.totalAmount.toFixed(2) }}</strong>
+                </td>
+                <td>
+                  {{ order.orderDate | date:'short' }}
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <button 
+                      class="btn btn-sm btn-outline-primary" 
+                      (click)="viewOrder(order.id!)"
+                      title="View Order">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button 
+                      class="btn btn-sm btn-outline-warning" 
+                      (click)="editOrder(order.id!)"
+                      title="Edit Order">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button 
+                      class="btn btn-sm btn-outline-danger" 
+                      (click)="deleteOrder(order.id!)"
+                      title="Delete Order">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- No Results Message -->
+        <div *ngIf="filteredOrders.length === 0 && !loading" class="text-center py-4">
+          <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+          <h5 class="text-muted">No orders found</h5>
+          <p class="text-muted">
+            <span *ngIf="searchTerm || statusFilter || emailFilter">
+              Try adjusting your search criteria or 
+              <a href="#" (click)="clearFilters(); $event.preventDefault()">clear all filters</a>.
+            </span>
+            <span *ngIf="!searchTerm && !statusFilter && !emailFilter">
+              No orders have been created yet. 
+              <a routerLink="/orders/new">Create your first order</a>.
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pagination -->
+<div *ngIf="!loading && totalPages > 1" class="row">
+  <div class="col-12">
+    <nav aria-label="Orders pagination">
+      <ul class="pagination justify-content-center">
+        <!-- Previous Page -->
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <a class="page-link" href="#" (click)="goToPage(currentPage - 1); $event.preventDefault()">
+            <i class="fas fa-chevron-left"></i>
+          </a>
+        </li>
+
+        <!-- Page Numbers -->
+        <li 
+          *ngFor="let page of getPageNumbers()" 
+          class="page-item" 
+          [class.active]="page === currentPage">
+          <a class="page-link" href="#" (click)="goToPage(page); $event.preventDefault()">
+            {{ page }}
+          </a>
+        </li>
+
+        <!-- Next Page -->
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <a class="page-link" href="#" (click)="goToPage(currentPage + 1); $event.preventDefault()">
+            <i class="fas fa-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div> 

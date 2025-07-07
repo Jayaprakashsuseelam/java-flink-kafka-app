@@ -1,0 +1,157 @@
+<div class="row">
+  <div class="col-12">
+    <h2 class="mb-4">
+      <i class="fas fa-tachometer-alt me-2"></i>
+      Dashboard Overview
+    </h2>
+  </div>
+</div>
+
+<div *ngIf="loading" class="loading-spinner">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+
+<div *ngIf="error" class="alert alert-danger" role="alert">
+  <i class="fas fa-exclamation-triangle me-2"></i>
+  {{ error }}
+</div>
+
+<div *ngIf="!loading && !error" class="row">
+  <!-- Statistics Cards -->
+  <div class="col-md-3 mb-4">
+    <div class="card text-center">
+      <div class="card-body">
+        <i class="fas fa-shopping-cart fa-2x text-primary mb-2"></i>
+        <h5 class="card-title">Total Orders</h5>
+        <h3 class="text-primary">{{ getTotalOrders() }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 mb-4">
+    <div class="card text-center">
+      <div class="card-body">
+        <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+        <h5 class="card-title">Total Revenue</h5>
+        <h3 class="text-success">${{ getTotalAmount().toFixed(2) }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 mb-4">
+    <div class="card text-center">
+      <div class="card-body">
+        <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+        <h5 class="card-title">Pending Orders</h5>
+        <h3 class="text-warning">{{ getStatusCount('PENDING') }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 mb-4">
+    <div class="card text-center">
+      <div class="card-body">
+        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+        <h5 class="card-title">Processed Orders</h5>
+        <h3 class="text-success">{{ getStatusCount('PROCESSED') }}</h3>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Orders -->
+<div *ngIf="!loading && !error" class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-list me-2"></i>
+          Recent Orders
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Customer Email</th>
+                <th>Status</th>
+                <th>Total Amount</th>
+                <th>Order Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let order of orders.slice(0, 5)">
+                <td>{{ order.id }}</td>
+                <td>{{ order.customerEmail }}</td>
+                <td>
+                  <span class="badge status-badge" 
+                        [ngClass]="{
+                          'status-pending': order.status === 'PENDING',
+                          'status-processed': order.status === 'PROCESSED',
+                          'status-cancelled': order.status === 'CANCELLED'
+                        }">
+                    {{ order.status }}
+                  </span>
+                </td>
+                <td>${{ order.totalAmount.toFixed(2) }}</td>
+                <td>{{ order.orderDate | date:'short' }}</td>
+                <td>
+                  <a [routerLink]="['/orders', order.id]" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div *ngIf="!loading && !error" class="row mt-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-bolt me-2"></i>
+          Quick Actions
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3 mb-2">
+            <a routerLink="/orders/new" class="btn btn-primary w-100">
+              <i class="fas fa-plus me-2"></i>
+              Create New Order
+            </a>
+          </div>
+          <div class="col-md-3 mb-2">
+            <a routerLink="/orders" class="btn btn-outline-primary w-100">
+              <i class="fas fa-list me-2"></i>
+              View All Orders
+            </a>
+          </div>
+          <div class="col-md-3 mb-2">
+            <a routerLink="/enriched-orders" class="btn btn-outline-success w-100">
+              <i class="fas fa-chart-line me-2"></i>
+              Enriched Orders
+            </a>
+          </div>
+          <div class="col-md-3 mb-2">
+            <a routerLink="/order-events" class="btn btn-outline-warning w-100">
+              <i class="fas fa-paper-plane me-2"></i>
+              Send Order Event
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

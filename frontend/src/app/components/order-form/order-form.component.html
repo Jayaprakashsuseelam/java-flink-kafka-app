@@ -1,0 +1,287 @@
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>
+        <i class="fas fa-edit me-2"></i>
+        {{ isEditMode ? 'Edit Order' : 'Create New Order' }}
+      </h2>
+      <button class="btn btn-outline-secondary" (click)="cancel()">
+        <i class="fas fa-times me-1"></i>
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Spinner -->
+<div *ngIf="loading" class="loading-spinner">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+
+<!-- Error Message -->
+<div *ngIf="error" class="alert alert-danger" role="alert">
+  <i class="fas fa-exclamation-triangle me-2"></i>
+  {{ error }}
+  <button type="button" class="btn-close float-end" (click)="error = ''"></button>
+</div>
+
+<!-- Order Form -->
+<form [formGroup]="orderForm" (ngSubmit)="onSubmit()" *ngIf="!loading">
+  <div class="row">
+    <!-- Customer Information -->
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-user me-2"></i>
+            Customer Information
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label for="customerName" class="form-label">Customer Name *</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="customerName"
+              formControlName="customerName"
+              [class.is-invalid]="isFieldInvalid('customerName')"
+              placeholder="Enter customer name">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('customerName')">
+              {{ getFieldError('customerName') }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="customerEmail" class="form-label">Customer Email *</label>
+            <input 
+              type="email" 
+              class="form-control" 
+              id="customerEmail"
+              formControlName="customerEmail"
+              [class.is-invalid]="isFieldInvalid('customerEmail')"
+              placeholder="Enter customer email">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('customerEmail')">
+              {{ getFieldError('customerEmail') }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="shippingAddress" class="form-label">Shipping Address *</label>
+            <textarea 
+              class="form-control" 
+              id="shippingAddress"
+              formControlName="shippingAddress"
+              [class.is-invalid]="isFieldInvalid('shippingAddress')"
+              rows="3"
+              placeholder="Enter shipping address"></textarea>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('shippingAddress')">
+              {{ getFieldError('shippingAddress') }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Information -->
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-info-circle me-2"></i>
+            Order Information
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label for="orderDate" class="form-label">Order Date *</label>
+            <input 
+              type="datetime-local" 
+              class="form-control" 
+              id="orderDate"
+              formControlName="orderDate"
+              [class.is-invalid]="isFieldInvalid('orderDate')">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('orderDate')">
+              {{ getFieldError('orderDate') }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="status" class="form-label">Status *</label>
+            <select 
+              class="form-select" 
+              id="status"
+              formControlName="status"
+              [class.is-invalid]="isFieldInvalid('status')">
+              <option *ngFor="let status of statusOptions" [value]="status">
+                {{ status }}
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('status')">
+              {{ getFieldError('status') }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Total Amount</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input 
+                type="text" 
+                class="form-control" 
+                [value]="calculateTotal().toFixed(2)"
+                readonly>
+            </div>
+            <small class="text-muted">Calculated automatically based on items</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Items -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        <i class="fas fa-shopping-cart me-2"></i>
+        Order Items
+      </h5>
+      <button 
+        type="button" 
+        class="btn btn-success btn-sm"
+        (click)="addItem()">
+        <i class="fas fa-plus me-1"></i>
+        Add Item
+      </button>
+    </div>
+    <div class="card-body">
+      <div formArrayName="items">
+        <div 
+          *ngFor="let item of items.controls; let i = index" 
+          [formGroupName]="i"
+          class="row mb-3 border rounded p-3">
+          
+          <div class="col-md-3">
+            <label class="form-label">Product Name *</label>
+            <input 
+              type="text" 
+              class="form-control"
+              formControlName="productName"
+              [class.is-invalid]="isItemFieldInvalid(i, 'productName')"
+              placeholder="Product name">
+            <div class="invalid-feedback" *ngIf="isItemFieldInvalid(i, 'productName')">
+              {{ getItemFieldError(i, 'productName') }}
+            </div>
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label">Product Code *</label>
+            <input 
+              type="text" 
+              class="form-control"
+              formControlName="productCode"
+              [class.is-invalid]="isItemFieldInvalid(i, 'productCode')"
+              placeholder="Code">
+            <div class="invalid-feedback" *ngIf="isItemFieldInvalid(i, 'productCode')">
+              {{ getItemFieldError(i, 'productCode') }}
+            </div>
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label">Quantity *</label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="quantity"
+              [class.is-invalid]="isItemFieldInvalid(i, 'quantity')"
+              min="1"
+              placeholder="Qty">
+            <div class="invalid-feedback" *ngIf="isItemFieldInvalid(i, 'quantity')">
+              {{ getItemFieldError(i, 'quantity') }}
+            </div>
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label">Unit Price *</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input 
+                type="number" 
+                class="form-control"
+                formControlName="unitPrice"
+                [class.is-invalid]="isItemFieldInvalid(i, 'unitPrice')"
+                min="0"
+                step="0.01"
+                placeholder="0.00">
+            </div>
+            <div class="invalid-feedback" *ngIf="isItemFieldInvalid(i, 'unitPrice')">
+              {{ getItemFieldError(i, 'unitPrice') }}
+            </div>
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label">Subtotal</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input 
+                type="text" 
+                class="form-control"
+                [value]="item.get('subtotal')?.value?.toFixed(2) || '0.00'"
+                readonly>
+            </div>
+          </div>
+
+          <div class="col-md-1 d-flex align-items-end">
+            <button 
+              type="button" 
+              class="btn btn-outline-danger btn-sm"
+              (click)="removeItem(i)"
+              [disabled]="items.length === 1"
+              title="Remove item">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Items Message -->
+      <div *ngIf="items.length === 0" class="text-center py-4">
+        <i class="fas fa-shopping-cart fa-2x text-muted mb-3"></i>
+        <p class="text-muted">No items added yet. Click "Add Item" to get started.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <strong>Total Amount: ${{ calculateTotal().toFixed(2) }}</strong>
+            </div>
+            <div>
+              <button 
+                type="button" 
+                class="btn btn-outline-secondary me-2"
+                (click)="cancel()">
+                <i class="fas fa-times me-1"></i>
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                class="btn btn-primary"
+                [disabled]="loading || orderForm.invalid">
+                <i class="fas fa-save me-1"></i>
+                {{ isEditMode ? 'Update Order' : 'Create Order' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</form> 

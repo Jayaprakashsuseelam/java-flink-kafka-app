@@ -1,0 +1,159 @@
+<div class="row">
+  <div class="col-12">
+    <h2 class="mb-4">
+      <i class="fas fa-chart-line me-2"></i>
+      Enriched Orders (MongoDB)
+    </h2>
+  </div>
+</div>
+
+<!-- Search Form -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-search me-2"></i>
+          Search Enriched Orders
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="input-group">
+              <input type="text" 
+                     class="form-control" 
+                     placeholder="Enter User ID to search..."
+                     [(ngModel)]="searchUserId"
+                     (keyup.enter)="searchEnrichedOrders()">
+              <button class="btn btn-primary" 
+                      type="button" 
+                      (click)="searchEnrichedOrders()"
+                      [disabled]="loading">
+                <i class="fas fa-search me-1"></i>
+                Search
+              </button>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <button class="btn btn-outline-secondary" 
+                    type="button" 
+                    (click)="clearResults()">
+              <i class="fas fa-times me-1"></i>
+              Clear Results
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Spinner -->
+<div *ngIf="loading" class="loading-spinner">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+
+<!-- Error Message -->
+<div *ngIf="error" class="alert alert-danger" role="alert">
+  <i class="fas fa-exclamation-triangle me-2"></i>
+  {{ error }}
+</div>
+
+<!-- Results -->
+<div *ngIf="!loading && enrichedOrders.length > 0" class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-list me-2"></i>
+          Enriched Orders for User: {{ searchUserId }}
+          <span class="badge bg-primary ms-2">{{ enrichedOrders.length }} orders</span>
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer Name</th>
+                <th>Item Name</th>
+                <th>Quantity</th>
+                <th>Item Price</th>
+                <th>Total Amount</th>
+                <th>Status</th>
+                <th>Order Time</th>
+                <th>Processed Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let order of enrichedOrders">
+                <td>
+                  <span class="badge bg-secondary">{{ order.orderId }}</span>
+                </td>
+                <td>{{ order.customerName }}</td>
+                <td>{{ order.itemName }}</td>
+                <td>{{ order.quantity }}</td>
+                <td>${{ (order.itemPrice || 0).toFixed(2) }}</td>
+                <td>
+                  <strong>${{ (order.totalAmount || 0).toFixed(2) }}</strong>
+                </td>
+                <td>
+                  <span class="badge status-badge" 
+                        [ngClass]="{
+                          'status-pending': order.orderStatus === 'PENDING',
+                          'status-processed': order.orderStatus === 'PROCESSED',
+                          'status-cancelled': order.orderStatus === 'CANCELLED'
+                        }">
+                    {{ order.orderStatus }}
+                  </span>
+                </td>
+                <td>{{ order.orderTime | date:'short' }}</td>
+                <td>{{ order.processedTime | date:'short' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- No Results -->
+<div *ngIf="!loading && !error && enrichedOrders.length === 0 && searchUserId" class="row">
+  <div class="col-12">
+    <div class="alert alert-info" role="alert">
+      <i class="fas fa-info-circle me-2"></i>
+      No enriched orders found for user ID: <strong>{{ searchUserId }}</strong>
+    </div>
+  </div>
+</div>
+
+<!-- Instructions -->
+<div *ngIf="!loading && !error && enrichedOrders.length === 0 && !searchUserId" class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-info-circle me-2"></i>
+          Instructions
+        </h5>
+      </div>
+      <div class="card-body">
+        <p>To view enriched orders:</p>
+        <ol>
+          <li>Enter a user ID in the search field above</li>
+          <li>Click "Search" to find enriched orders for that user</li>
+          <li>The results will show orders that have been processed through the Flink stream</li>
+        </ol>
+        <p class="text-muted">
+          <i class="fas fa-lightbulb me-1"></i>
+          <strong>Tip:</strong> Make sure you have sent some order events through the Kafka pipeline first.
+        </p>
+      </div>
+    </div>
+  </div>
+</div> 
